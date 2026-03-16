@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getTrip, getMediaByTrip } from '@/lib/queries/media'
 import TripDetailClient from '@/components/TripDetailClient'
+import TripEditButton from '@/components/TripEditButton'
 
 function formatDateRange(start: string | null, end: string | null): string | null {
   if (!start) return null
@@ -102,26 +103,7 @@ export default async function TripDetailPage({
               Play Slideshow
             </Link>
 
-            <button
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm transition-all opacity-70 hover:opacity-100"
-              style={{
-                fontFamily: 'var(--font-body)',
-                background: 'rgba(240,230,214,0.08)',
-                border: '1px solid rgba(240,230,214,0.1)',
-                color: '#f0e6d6',
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M8.5 1.5l2 2M1 11l.7-2.8L9 .9l2 2-7.3 7.3L1 11z"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Edit
-            </button>
+            <TripEditButton trip={trip} />
           </div>
         </div>
 
@@ -187,7 +169,12 @@ export default async function TripDetailPage({
 
       {/* Media grid */}
       <main className="px-6 max-w-7xl mx-auto pt-8">
-        <TripDetailClient media={media} tripId={trip.id} userId={trip.user_id} />
+        <TripDetailClient
+          media={media}
+          tripId={trip.id}
+          userId={trip.user_id}
+          trip={trip}
+        />
       </main>
     </div>
   )
