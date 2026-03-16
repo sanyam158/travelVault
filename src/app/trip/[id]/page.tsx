@@ -187,7 +187,7 @@ export default async function TripDetailPage({
 
       {/* Media grid */}
       <main className="px-6 max-w-7xl mx-auto pt-8">
-        <TripDetailClient media={media} tripId={trip.id} />
+        <TripDetailClient media={media} tripId={trip.id} userId={trip.user_id} />
       </main>
     </div>
   )
