@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
 import TripCard from './TripCard'
 import type { Trip } from '@/types'
 
@@ -12,9 +11,7 @@ const container = {
   },
 }
 
-function EmptyState() {
-  const router = useRouter()
-
+function EmptyState({ onOpenModal }: { onOpenModal: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-32 px-6 text-center">
       {/* Film reel icon */}
@@ -22,7 +19,6 @@ function EmptyState() {
         <circle cx="36" cy="36" r="32" stroke="#d4a574" strokeWidth="1.5" />
         <circle cx="36" cy="36" r="12" stroke="#d4a574" strokeWidth="1.5" />
         <circle cx="36" cy="36" r="3" fill="#d4a574" />
-        {/* Sprocket holes */}
         <circle cx="36" cy="10" r="4" stroke="#d4a574" strokeWidth="1.5" />
         <circle cx="36" cy="62" r="4" stroke="#d4a574" strokeWidth="1.5" />
         <circle cx="10" cy="36" r="4" stroke="#d4a574" strokeWidth="1.5" />
@@ -58,7 +54,7 @@ function EmptyState() {
       </p>
 
       <button
-        onClick={() => router.push('/trip/new')}
+        onClick={onOpenModal}
         className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200"
         style={{
           fontFamily: 'var(--font-body)',
@@ -82,15 +78,20 @@ function EmptyState() {
   )
 }
 
-export default function TripGrid({ trips }: { trips: Trip[] }) {
-  if (trips.length === 0) return <EmptyState />
+interface Props {
+  trips: Trip[]
+  onOpenModal: () => void
+}
+
+export default function TripGrid({ trips, onOpenModal }: Props) {
+  if (trips.length === 0) return <EmptyState onOpenModal={onOpenModal} />
 
   return (
     <motion.div
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 px-6 pb-28 max-w-7xl mx-auto"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-28"
     >
       {trips.map(trip => (
         <TripCard key={trip.id} trip={trip} />

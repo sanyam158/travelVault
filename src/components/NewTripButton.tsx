@@ -1,13 +1,13 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+interface Props {
+  onClick: () => void
+}
 
-export default function NewTripButton() {
-  const router = useRouter()
-
+export default function NewTripButton({ onClick }: Props) {
   return (
     <button
-      onClick={() => router.push('/trip/new')}
+      onClick={onClick}
       className="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full text-sm font-medium transition-all duration-200"
       style={{
         fontFamily: 'var(--font-body)',

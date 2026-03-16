@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getTrips } from '@/lib/queries/trips'
 import AuthButton from '@/components/AuthButton'
-import TripGrid from '@/components/TripGrid'
-import NewTripButton from '@/components/NewTripButton'
+import HomeClient from '@/components/HomeClient'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -81,13 +80,11 @@ export default async function HomePage() {
           )}
         </section>
 
-        {/* Trip grid */}
+        {/* Grid + modal (client) */}
         <section className="px-6 max-w-7xl mx-auto">
-          <TripGrid trips={trips} />
+          <HomeClient trips={trips} userId={user?.id ?? ''} />
         </section>
       </main>
-
-      <NewTripButton />
     </div>
   )
 }
