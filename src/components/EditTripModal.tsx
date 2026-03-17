@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { updateTrip, deleteTrip } from '@/app/actions/trips'
 import type { Trip } from '@/types'
 
@@ -121,10 +122,12 @@ export default function EditTripModal({ trip, open, onClose }: Props) {
         ...(cover_image_url !== undefined && { cover_image_url }),
       })
 
+      toast.success('Trip updated')
       router.refresh()
       handleClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
+      toast.error('Failed to save changes')
       setLoading(false)
     }
   }
@@ -134,9 +137,11 @@ export default function EditTripModal({ trip, open, onClose }: Props) {
     setError(null)
     try {
       await deleteTrip(trip.id)
+      toast.success('Trip deleted')
       router.push('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed')
+      toast.error('Failed to delete trip')
       setLoading(false)
     }
   }

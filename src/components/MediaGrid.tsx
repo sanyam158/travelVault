@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
@@ -128,6 +128,7 @@ function SortableMediaCard({
         <Image
           src={m.file_url}
           fill
+          loading="lazy"
           alt={m.caption || ''}
           className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -266,12 +267,9 @@ export default function MediaGrid({
   const [items, setItems] = useState<Media[]>(media)
 
   // Keep in sync when server data changes
-  if (
-    media.length !== items.length ||
-    media.some((m, i) => m.id !== items[i]?.id || m.caption !== items[i]?.caption || m.location_name !== items[i]?.location_name)
-  ) {
+  useEffect(() => {
     setItems(media)
-  }
+  }, [media])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

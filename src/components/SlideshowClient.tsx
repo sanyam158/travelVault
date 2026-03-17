@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Trip, Media, KenBurnsConfig } from '@/types'
@@ -85,18 +85,23 @@ function KenBurnsSlide({
 
 /* ─── Film Grain ───────────────────────────────────────────── */
 
-function FilmGrain() {
+const FilmGrain = memo(function FilmGrain() {
   return (
     <div
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 45, opacity: 0.035, mixBlendMode: 'overlay' }}
+      style={{
+        zIndex: 45,
+        opacity: 0.035,
+        mixBlendMode: 'overlay',
+        contain: 'strict',
+      }}
     >
       <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
         <filter id="grain">
           <feTurbulence
             type="fractalNoise"
             baseFrequency="0.7"
-            numOctaves="3"
+            numOctaves="2"
             stitchTiles="stitch"
           />
         </filter>
@@ -104,7 +109,7 @@ function FilmGrain() {
       </svg>
     </div>
   )
-}
+})
 
 /* ─── Main Component ───────────────────────────────────────── */
 
@@ -123,6 +128,7 @@ export default function SlideshowClient({ trip, media }: Props) {
   const [showControls, setShowControls] = useState(true)
   const [loadProgress, setLoadProgress] = useState(0)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   const dateRange = formatDateRange(trip.start_date, trip.end_date)
 
@@ -147,7 +153,7 @@ export default function SlideshowClient({ trip, media }: Props) {
     setPhase('playing')
   }, [])
 
-  // ─── Preload images ────────────────────────────────────────
+  // ─── Preload images (progressive: first few then background) ─
   const preloadImages = useCallback(async () => {
     setPhase('loading')
     const imageMedia = media.filter((m) => m.type === 'photo')
@@ -155,24 +161,31 @@ export default function SlideshowClient({ trip, media }: Props) {
       setPhase('playing')
       return
     }
+
+    const loadImage = (url: string) =>
+      new Promise<void>((resolve) => {
+        const img = new window.Image()
+        img.onload = img.onerror = () => resolve()
+        img.src = url
+      })
+
+    // Load first 3 images before starting playback
+    const initialBatch = imageMedia.slice(0, 3)
     let loaded = 0
+    const total = initialBatch.length
     await Promise.all(
-      imageMedia.map(
-        (m) =>
-          new Promise<void>((resolve) => {
-            const img = new window.Image()
-            img.onload = img.onerror = () => {
-              loaded++
-              setLoadProgress(
-                Math.round((loaded / imageMedia.length) * 100)
-              )
-              resolve()
-            }
-            img.src = m.file_url
-          })
+      initialBatch.map((m) =>
+        loadImage(m.file_url).then(() => {
+          loaded++
+          setLoadProgress(Math.round((loaded / total) * 100))
+        })
       )
     )
     setPhase('playing')
+
+    // Preload remaining images in background (non-blocking)
+    const remaining = imageMedia.slice(3)
+    remaining.forEach((m) => loadImage(m.file_url))
   }, [media])
 
   // ─── Auto-advance ──────────────────────────────────────────
@@ -184,11 +197,15 @@ export default function SlideshowClient({ trip, media }: Props) {
     return () => clearTimeout(timer)
   }, [currentIndex, isPlaying, phase, goToNext])
 
-  // ─── Controls auto-hide ────────────────────────────────────
+  // ─── Controls auto-hide (throttled mousemove) ──────────────
   useEffect(() => {
     if (phase !== 'playing') return
 
+    let lastMove = 0
     const handleMove = () => {
+      const now = Date.now()
+      if (now - lastMove < 150) return // throttle to ~7fps
+      lastMove = now
       setShowControls(true)
       if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
       controlsTimerRef.current = setTimeout(
@@ -197,7 +214,7 @@ export default function SlideshowClient({ trip, media }: Props) {
       )
     }
 
-    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mousemove', handleMove, { passive: true })
     // Start the hide timer
     controlsTimerRef.current = setTimeout(
       () => setShowControls(false),
@@ -259,7 +276,39 @@ export default function SlideshowClient({ trip, media }: Props) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [phase, goToNext, goToPrev, toggleFullscreen, preloadImages, replay, router, trip.id])
 
+  // Touch swipe handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStartRef.current) return
+      const dx = e.changedTouches[0].clientX - touchStartRef.current.x
+      const dy = e.changedTouches[0].clientY - touchStartRef.current.y
+      touchStartRef.current = null
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) goToNext()
+        else goToPrev()
+        setShowControls(true)
+        if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
+        controlsTimerRef.current = setTimeout(
+          () => setShowControls(false),
+          CONTROLS_HIDE_DELAY
+        )
+      }
+    },
+    [goToNext, goToPrev]
+  )
+
   const currentMedia = media[currentIndex] ?? null
+  const nextMediaUrl =
+    phase === 'playing' && currentIndex < media.length - 1
+      ? media[currentIndex + 1].file_url
+      : null
 
   // ─── Empty state ───────────────────────────────────────────
   if (media.length === 0) {
@@ -514,6 +563,8 @@ export default function SlideshowClient({ trip, media }: Props) {
         background: '#000',
         cursor: showControls ? 'default' : 'none',
       }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Slides with crossfade */}
       <AnimatePresence mode="sync">
@@ -528,6 +579,11 @@ export default function SlideshowClient({ trip, media }: Props) {
           <KenBurnsSlide media={media[currentIndex]} isActive />
         </motion.div>
       </AnimatePresence>
+
+      {/* Preload next slide */}
+      {nextMediaUrl && (
+        <link rel="preload" as="image" href={nextMediaUrl} />
+      )}
 
       {/* Vignette */}
       <div
@@ -544,12 +600,12 @@ export default function SlideshowClient({ trip, media }: Props) {
 
       {/* Letterbox bars */}
       <div
-        className="fixed top-0 left-0 right-0"
-        style={{ height: '8vh', background: '#000', zIndex: 50 }}
+        className="fixed top-0 left-0 right-0 h-[4vh] sm:h-[8vh]"
+        style={{ background: '#000', zIndex: 50 }}
       />
       <div
-        className="fixed bottom-0 left-0 right-0"
-        style={{ height: '8vh', background: '#000', zIndex: 50 }}
+        className="fixed bottom-0 left-0 right-0 h-[4vh] sm:h-[8vh]"
+        style={{ background: '#000', zIndex: 50 }}
       />
 
       {/* ─── Controls overlay ─────────────────────────── */}
@@ -565,10 +621,8 @@ export default function SlideshowClient({ trip, media }: Props) {
         {/* Back button (top-left, inside letterbox) */}
         <button
           onClick={() => router.push(`/trip/${trip.id}`)}
-          className="absolute flex items-center justify-center w-10 h-10 rounded-full transition-all"
+          className="absolute flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 rounded-full transition-all top-[calc(4vh+12px)] sm:top-[calc(8vh+16px)] left-4 sm:left-6"
           style={{
-            top: 'calc(8vh + 16px)',
-            left: 24,
             pointerEvents: showControls ? 'auto' : 'none',
             background: 'rgba(0,0,0,0.4)',
             border: '1px solid rgba(240,230,214,0.15)',
@@ -589,10 +643,8 @@ export default function SlideshowClient({ trip, media }: Props) {
         {/* Fullscreen button (top-right, inside letterbox) */}
         <button
           onClick={toggleFullscreen}
-          className="absolute flex items-center justify-center w-10 h-10 rounded-full transition-all"
+          className="absolute flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 rounded-full transition-all top-[calc(4vh+12px)] sm:top-[calc(8vh+16px)] right-4 sm:right-6"
           style={{
-            top: 'calc(8vh + 16px)',
-            right: 24,
             pointerEvents: showControls ? 'auto' : 'none',
             background: 'rgba(0,0,0,0.4)',
             border: '1px solid rgba(240,230,214,0.15)',
@@ -613,7 +665,7 @@ export default function SlideshowClient({ trip, media }: Props) {
         {/* Center play/pause */}
         <button
           onClick={() => setIsPlaying((p) => !p)}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-16 h-16 rounded-full transition-all"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-20 h-20 sm:w-16 sm:h-16 rounded-full transition-all"
           style={{
             pointerEvents: showControls ? 'auto' : 'none',
             background: 'rgba(0,0,0,0.35)',
@@ -652,7 +704,7 @@ export default function SlideshowClient({ trip, media }: Props) {
         {currentIndex > 0 && (
           <button
             onClick={goToPrev}
-            className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full transition-all"
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 rounded-full transition-all"
             style={{
               pointerEvents: showControls ? 'auto' : 'none',
               background: 'rgba(0,0,0,0.35)',
@@ -676,7 +728,7 @@ export default function SlideshowClient({ trip, media }: Props) {
         {currentIndex < media.length - 1 && (
           <button
             onClick={goToNext}
-            className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full transition-all"
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 rounded-full transition-all"
             style={{
               pointerEvents: showControls ? 'auto' : 'none',
               background: 'rgba(0,0,0,0.35)',
@@ -699,9 +751,9 @@ export default function SlideshowClient({ trip, media }: Props) {
 
       {/* ─── Bottom info (above letterbox) ─────────────── */}
       <div
-        className="fixed left-0 right-0 flex items-end justify-between px-8"
+        className="fixed left-0 right-0 flex items-end justify-between px-4 sm:px-8"
         style={{
-          bottom: 'calc(8vh + 12px)',
+          bottom: 'calc(4vh + 12px)',
           zIndex: 55,
           opacity: showControls ? 1 : 0,
           transition: 'opacity 0.4s',
@@ -769,8 +821,8 @@ export default function SlideshowClient({ trip, media }: Props) {
 
       {/* ─── Segmented progress bar (inside bottom letterbox) */}
       <div
-        className="fixed left-0 right-0 flex gap-1 px-8"
-        style={{ bottom: '3vh', zIndex: 55 }}
+        className="fixed left-0 right-0 flex gap-1 px-4 sm:px-8"
+        style={{ bottom: '1.5vh', zIndex: 55 }}
       >
         {media.map((_, i) => (
           <div

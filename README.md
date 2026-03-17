@@ -1,40 +1,81 @@
-<<<<<<< HEAD
-# travelVault
-=======
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TravelVault
 
-## Getting Started
+A cinematic travel media vault built with Next.js, Supabase, and Framer Motion.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router, Server Components)
+- **Database & Auth**: Supabase (PostgreSQL, Auth, Storage)
+- **Styling**: Tailwind CSS 4
+- **Animations**: Framer Motion
+- **Drag & Drop**: dnd-kit
+- **Language**: TypeScript
+
+## Prerequisites
+
+- Node.js 18+
+- A [Supabase](https://supabase.com) project
+
+## Setup
+
+1. Clone the repository:
+
+```bash
+git clone <repo-url>
+cd travelvault
+npm install
+```
+
+2. Copy the environment file and fill in your Supabase credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Configure your Supabase project:
+
+**Database tables:**
+
+- `trips` — id, user_id, title, subtitle, cover_image_url, start_date, end_date, media_count, created_at, updated_at
+- `media` — id, trip_id, file_url, thumbnail_url, type, caption, location_name, latitude, longitude, sort_order, exif_data, ken_burns_config, captured_at, uploaded_at
+
+**Storage:**
+
+- Create a `media` bucket (public)
+- Used for trip cover images and media uploads
+
+**Auth:**
+
+- Enable Google OAuth (or your preferred provider)
+- Set redirect URL to `http://localhost:3000/auth/callback`
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy
 
-## Learn More
+Push to GitHub and connect to [Vercel](https://vercel.com) for automatic deployments. Set the environment variables in your Vercel project settings:
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_APP_URL` (your production URL)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
->>>>>>> origin/master
+- Create and manage trips with cover images
+- Upload photos and videos with EXIF extraction
+- Drag-and-drop media reordering
+- Cinematic slideshow with Ken Burns effects, film grain, and crossfade
+- Edit media captions, locations, and Ken Burns parameters
+- Batch select and delete media
+- Mobile-friendly with swipe gestures in slideshow
+- Dark cinematic design with warm gold accents

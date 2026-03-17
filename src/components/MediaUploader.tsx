@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { extractExif } from '@/lib/utils/exif'
 import { generateKenBurnsConfig } from '@/lib/utils/kenburns'
+import { toast } from 'sonner'
 import { insertMedia } from '@/app/actions/media'
 
 export interface UploadItem {
@@ -130,10 +131,9 @@ export default function MediaUploader({
 
         updateItem(item.id, { status: 'done', progress: 100 })
       } catch (err) {
-        updateItem(item.id, {
-          status: 'error',
-          error: err instanceof Error ? err.message : 'Upload failed',
-        })
+        const msg = err instanceof Error ? err.message : 'Upload failed'
+        updateItem(item.id, { status: 'error', error: msg })
+        toast.error(`${item.name}: ${msg}`)
       }
     },
     [userId, tripId, updateItem]
@@ -184,6 +184,7 @@ export default function MediaUploader({
           await processFile(validItems[i], baseOrder + i)
         }
         setIsProcessing(false)
+        toast.success(`${validItems.length} ${validItems.length === 1 ? 'memory' : 'memories'} uploaded`)
       }
     },
     [existingCount, uploads, isProcessing, setUploads, processFile]

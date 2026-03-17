@@ -44,7 +44,7 @@ export default function TripCard({ trip }: { trip: Trip }) {
     <motion.div
       variants={cardVariant}
       onClick={() => router.push(`/trip/${trip.id}`)}
-      whileHover={{ scale: 1.025, filter: 'brightness(1.08)' }}
+      whileHover={{ scale: 1.025 }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
       className="relative cursor-pointer rounded-2xl overflow-hidden"
       style={{ aspectRatio: '4/3', background: '#141414' }}

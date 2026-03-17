@@ -7,6 +7,7 @@ import MediaGrid from './MediaGrid'
 import MediaUploader, { type UploadItem } from './MediaUploader'
 import UploadPanel from './UploadPanel'
 import EditMediaModal from './EditMediaModal'
+import { toast } from 'sonner'
 import { updateMediaOrder, deleteMultipleMedia } from '@/app/actions/media'
 import type { Media, Trip } from '@/types'
 
@@ -67,7 +68,11 @@ export default function TripDetailClient({
   const handleReorder = useCallback(
     async (orderedIds: string[]) => {
       // Optimistic — MediaGrid already reordered locally
-      await updateMediaOrder(tripId, orderedIds)
+      try {
+        await updateMediaOrder(tripId, orderedIds)
+      } catch {
+        toast.error('Failed to save order')
+      }
     },
     [tripId]
   )
@@ -77,9 +82,12 @@ export default function TripDetailClient({
     setBatchLoading(true)
     try {
       await deleteMultipleMedia([...selectedIds])
+      toast.success(`${selectedIds.size} ${selectedIds.size === 1 ? 'memory' : 'memories'} deleted`)
       setSelectedIds(new Set())
       setBatchConfirm(false)
       router.refresh()
+    } catch {
+      toast.error('Failed to delete selected items')
     } finally {
       setBatchLoading(false)
     }

@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { createTrip } from '@/app/actions/trips'
 
 const INPUT_STYLE = {
@@ -104,6 +105,7 @@ export default function CreateTripModal({ open, userId, onClose, onSuccess }: Pr
         cover_image_url,
       })
 
+      toast.success('Trip created')
       onSuccess(tripId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')

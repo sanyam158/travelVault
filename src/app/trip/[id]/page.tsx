@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,6 +18,25 @@ function formatDateRange(start: string | null, end: string | null): string | nul
   return `${fmt(start)} — ${fmt(end)}`
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const trip = await getTrip(id)
+  if (!trip) return {}
+  return {
+    title: trip.title,
+    description: trip.subtitle || `${trip.title} — Travel memories`,
+    openGraph: {
+      title: trip.title,
+      description: trip.subtitle || undefined,
+      images: trip.cover_image_url ? [{ url: trip.cover_image_url }] : [],
+    },
+  }
+}
+
 export default async function TripDetailPage({
   params,
 }: {
@@ -34,7 +54,7 @@ export default async function TripDetailPage({
       {/* Hero */}
       <section
         className="relative w-full"
-        style={{ height: '40vh', minHeight: 320 }}
+        style={{ height: '40vh', minHeight: 280 }}
       >
         {/* Cover image */}
         {trip.cover_image_url ? (
@@ -63,7 +83,7 @@ export default async function TripDetailPage({
         />
 
         {/* Top bar */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-5 z-10">
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 sm:px-6 py-5 z-10">
           {/* Back arrow */}
           <Link
             href="/"
@@ -89,7 +109,7 @@ export default async function TripDetailPage({
           <div className="flex items-center gap-2">
             <Link
               href={`/trip/${trip.id}/slideshow`}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm transition-all"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-full text-sm transition-all"
               style={{
                 fontFamily: 'var(--font-body)',
                 background: 'rgba(212,165,116,0.15)',
@@ -100,7 +120,7 @@ export default async function TripDetailPage({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M4 2.5l8 4.5-8 4.5V2.5z" fill="currentColor" />
               </svg>
-              Play Slideshow
+              <span className="hidden sm:inline">Play Slideshow</span>
             </Link>
 
             <TripEditButton trip={trip} />
@@ -108,7 +128,7 @@ export default async function TripDetailPage({
         </div>
 
         {/* Title overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-8 z-10">
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-6 sm:pb-8 z-10">
           <div className="max-w-7xl mx-auto">
             {dateRange && (
               <p
@@ -168,7 +188,7 @@ export default async function TripDetailPage({
       </section>
 
       {/* Media grid */}
-      <main className="px-6 max-w-7xl mx-auto pt-8">
+      <main className="px-4 sm:px-6 max-w-7xl mx-auto pt-8">
         <TripDetailClient
           media={media}
           tripId={trip.id}

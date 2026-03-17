@@ -15,7 +15,7 @@ export default async function HomePage() {
     <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>
       {/* Top bar */}
       <header
-        className="sticky top-0 z-50 flex items-center justify-between px-6 py-4"
+        className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-4"
         style={{
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
@@ -39,7 +39,7 @@ export default async function HomePage() {
 
       <main>
         {/* Hero */}
-        <section className="px-6 pt-16 pb-12 max-w-7xl mx-auto">
+        <section className="px-4 sm:px-6 pt-16 pb-12 max-w-7xl mx-auto">
           <p
             style={{
               fontFamily: 'var(--font-body)',
@@ -81,7 +81,7 @@ export default async function HomePage() {
         </section>
 
         {/* Grid + modal (client) */}
-        <section className="px-6 max-w-7xl mx-auto">
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto">
           <HomeClient trips={trips} userId={user?.id ?? ''} />
         </section>
       </main>

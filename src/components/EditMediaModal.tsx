@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { updateMedia, deleteMedia } from '@/app/actions/media'
 import { generateKenBurnsConfig } from '@/lib/utils/kenburns'
 import type { Media, KenBurnsConfig } from '@/types'
@@ -80,6 +81,7 @@ interface Props {
 
 export default function EditMediaModal({ media, open, onClose }: Props) {
   const router = useRouter()
+  const instanceId = useId().replace(/:/g, '')
   const [caption, setCaption] = useState(media.caption ?? '')
   const [locationName, setLocationName] = useState(media.location_name ?? '')
   const [kb, setKb] = useState<KenBurnsConfig>(
@@ -129,10 +131,12 @@ export default function EditMediaModal({ media, open, onClose }: Props) {
         location_name: locationName.trim() || null,
         ken_burns_config: kb,
       })
+      toast.success('Memory updated')
       router.refresh()
       handleClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
+      toast.error('Failed to save changes')
       setLoading(false)
     }
   }
@@ -142,19 +146,17 @@ export default function EditMediaModal({ media, open, onClose }: Props) {
     setError(null)
     try {
       await deleteMedia(media.id)
+      toast.success('Memory deleted')
       router.refresh()
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed')
+      toast.error('Failed to delete')
       setLoading(false)
     }
   }
 
-  const kbPreviewStyle = {
-    animation: 'kenBurnsPreview 3s ease-in-out infinite alternate',
-    // We use a style tag for the keyframes
-    transform: `scale(${kb.startScale}) translate(${kb.startX}%, ${kb.startY}%)`,
-  }
+  const kbAnimName = `kb_${instanceId}`
 
   return (
     <AnimatePresence>
@@ -171,8 +173,8 @@ export default function EditMediaModal({ media, open, onClose }: Props) {
             if (e.target === e.currentTarget) handleClose()
           }}
         >
-          <style>{`
-            @keyframes kenBurnsPreview {
+          <style key={`${kbAnimName}-${kb.startScale}-${kb.endScale}-${kb.startX}-${kb.endX}-${kb.startY}-${kb.endY}`}>{`
+            @keyframes ${kbAnimName} {
               from { transform: scale(${kb.startScale}) translate(${kb.startX}%, ${kb.startY}%); }
               to   { transform: scale(${kb.endScale}) translate(${kb.endX}%, ${kb.endY}%); }
             }
@@ -248,7 +250,7 @@ export default function EditMediaModal({ media, open, onClose }: Props) {
                         alt=""
                         className="absolute inset-0 w-full h-full object-cover"
                         style={{
-                          animation: 'kenBurnsPreview 3s ease-in-out infinite alternate',
+                          animation: `${kbAnimName} 3s ease-in-out infinite alternate`,
                         }}
                       />
                     </div>
