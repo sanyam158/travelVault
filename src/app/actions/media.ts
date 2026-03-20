@@ -71,11 +71,16 @@ export async function updateMediaOrder(
     .single()
   if (!trip) throw new Error('Trip not found')
 
-  await Promise.all(
-    orderedIds.map((id, index) =>
-      supabase.from('media').update({ sort_order: index }).eq('id', id)
+  // Process in chunks to reduce concurrent DB connections
+  const CHUNK_SIZE = 10
+  for (let i = 0; i < orderedIds.length; i += CHUNK_SIZE) {
+    const chunk = orderedIds.slice(i, i + CHUNK_SIZE)
+    await Promise.all(
+      chunk.map((id, j) =>
+        supabase.from('media').update({ sort_order: i + j }).eq('id', id)
+      )
     )
-  )
+  }
 
   revalidatePath(`/trip/${tripId}`)
 }

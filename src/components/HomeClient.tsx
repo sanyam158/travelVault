@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import TripGrid from './TripGrid'
 import NewTripButton from './NewTripButton'
-import CreateTripModal from './CreateTripModal'
+
+const CreateTripModal = dynamic(() => import('./CreateTripModal'), { ssr: false })
 import type { Trip } from '@/types'
 
 interface Props {

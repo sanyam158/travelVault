@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Trip, Media, KenBurnsConfig } from '@/types'
 
@@ -68,10 +69,13 @@ function KenBurnsSlide({
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <img
+      <Image
         src={media.file_url}
+        fill
         alt={media.caption || ''}
-        className="absolute inset-0 w-full h-full object-cover will-change-transform"
+        className="object-cover will-change-transform"
+        sizes="100vw"
+        priority
         style={{
           transform: animated
             ? `scale(${kb.endScale}) translate(${kb.endX}%, ${kb.endY}%)`

@@ -1,9 +1,45 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Trip } from '@/types'
+
+const BADGE_STYLE = {
+  background: 'rgba(212,165,116,0.18)',
+  border: '1px solid rgba(212,165,116,0.3)',
+  color: '#d4a574',
+  fontFamily: 'var(--font-body)',
+  letterSpacing: '0.04em',
+} as const
+
+const TITLE_STYLE = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '1.65rem',
+  fontWeight: 400,
+  color: '#f0e6d6',
+  lineHeight: 1.1,
+  letterSpacing: '-0.01em',
+} as const
+
+const SUBTITLE_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.8rem',
+  color: '#f0e6d6',
+  opacity: 0.55,
+  marginTop: 3,
+} as const
+
+const DATE_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.72rem',
+  color: '#d4a574',
+  opacity: 0.85,
+  marginTop: 6,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase' as const,
+} as const
 
 export const cardVariant = {
   hidden: { opacity: 0, y: 24 },
@@ -37,7 +73,7 @@ function PlaceholderCover() {
   )
 }
 
-export default function TripCard({ trip }: { trip: Trip }) {
+const TripCard = memo(function TripCard({ trip }: { trip: Trip }) {
   const router = useRouter()
 
   return (
@@ -77,61 +113,30 @@ export default function TripCard({ trip }: { trip: Trip }) {
         {trip.media_count > 0 && (
           <span
             className="inline-block mb-2 px-2.5 py-0.5 rounded-full text-xs"
-            style={{
-              background: 'rgba(212,165,116,0.18)',
-              border: '1px solid rgba(212,165,116,0.3)',
-              color: '#d4a574',
-              fontFamily: 'var(--font-body)',
-              letterSpacing: '0.04em',
-            }}
+            style={BADGE_STYLE}
           >
             {trip.media_count} {trip.media_count === 1 ? 'photo' : 'photos'}
           </span>
         )}
 
-        <h2
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.65rem',
-            fontWeight: 400,
-            color: '#f0e6d6',
-            lineHeight: 1.1,
-            letterSpacing: '-0.01em',
-          }}
-        >
+        <h2 style={TITLE_STYLE}>
           {trip.title}
         </h2>
 
         {trip.subtitle && (
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.8rem',
-              color: '#f0e6d6',
-              opacity: 0.55,
-              marginTop: 3,
-            }}
-          >
+          <p style={SUBTITLE_STYLE}>
             {trip.subtitle}
           </p>
         )}
 
         {(trip.start_date || trip.end_date) && (
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.72rem',
-              color: '#d4a574',
-              opacity: 0.85,
-              marginTop: 6,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <p style={DATE_STYLE}>
             {formatDateRange(trip.start_date, trip.end_date)}
           </p>
         )}
       </div>
     </motion.div>
   )
-}
+})
+
+export default TripCard

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
@@ -19,6 +19,50 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Media } from '@/types'
+
+const EMPTY_TITLE_STYLE = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '2rem',
+  fontWeight: 300,
+  color: '#f0e6d6',
+  opacity: 0.6,
+  marginBottom: 10,
+} as const
+
+const EMPTY_DESC_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.9rem',
+  color: '#f0e6d6',
+  opacity: 0.35,
+} as const
+
+const VIDEO_OVERLAY_STYLE = {
+  width: 40,
+  height: 40,
+  background: 'rgba(0,0,0,0.6)',
+  border: '1.5px solid rgba(240,230,214,0.3)',
+} as const
+
+const EDIT_BTN_STYLE = {
+  background: 'rgba(0,0,0,0.7)',
+  border: '1px solid rgba(240,230,214,0.2)',
+  pointerEvents: 'auto' as const,
+} as const
+
+const CAPTION_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.78rem',
+  color: '#f0e6d6',
+  opacity: 0.6,
+  marginTop: 6,
+  lineHeight: 1.4,
+} as const
+
+const LOCATION_TEXT_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.68rem',
+  color: '#d4a574',
+} as const
 
 function EmptyState() {
   return (
@@ -48,26 +92,10 @@ function EmptyState() {
         />
         <circle cx="52" cy="28" r="2" fill="#d4a574" />
       </svg>
-      <h2
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '2rem',
-          fontWeight: 300,
-          color: '#f0e6d6',
-          opacity: 0.6,
-          marginBottom: 10,
-        }}
-      >
+      <h2 style={EMPTY_TITLE_STYLE}>
         No memories yet.
       </h2>
-      <p
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '0.9rem',
-          color: '#f0e6d6',
-          opacity: 0.35,
-        }}
-      >
+      <p style={EMPTY_DESC_STYLE}>
         Drop photos here or click to upload.
       </p>
     </div>
@@ -82,7 +110,7 @@ interface CardProps {
   anySelected: boolean
 }
 
-function SortableMediaCard({
+const SortableMediaCard = memo(function SortableMediaCard({
   m,
   onEdit,
   onSelect,
@@ -139,12 +167,7 @@ function SortableMediaCard({
           <div className="absolute inset-0 flex items-center justify-center">
             <div
               className="flex items-center justify-center rounded-full"
-              style={{
-                width: 40,
-                height: 40,
-                background: 'rgba(0,0,0,0.6)',
-                border: '1.5px solid rgba(240,230,214,0.3)',
-              }}
+              style={VIDEO_OVERLAY_STYLE}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M4 2.5l8 4.5-8 4.5V2.5z" fill="#f0e6d6" />
@@ -185,11 +208,7 @@ function SortableMediaCard({
         {/* Edit button */}
         <button
           className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{
-            background: 'rgba(0,0,0,0.7)',
-            border: '1px solid rgba(240,230,214,0.2)',
-            pointerEvents: 'auto',
-          }}
+          style={EDIT_BTN_STYLE}
           onClick={(e) => {
             e.stopPropagation()
             onEdit(m)
@@ -210,14 +229,7 @@ function SortableMediaCard({
       {/* Caption */}
       {m.caption && (
         <p
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '0.78rem',
-            color: '#f0e6d6',
-            opacity: 0.6,
-            marginTop: 6,
-            lineHeight: 1.4,
-          }}
+          style={CAPTION_STYLE}
           className="truncate"
         >
           {m.caption}
@@ -234,11 +246,7 @@ function SortableMediaCard({
             />
           </svg>
           <span
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.68rem',
-              color: '#d4a574',
-            }}
+            style={LOCATION_TEXT_STYLE}
             className="truncate"
           >
             {m.location_name}
@@ -247,7 +255,7 @@ function SortableMediaCard({
       )}
     </motion.div>
   )
-}
+})
 
 interface Props {
   media: Media[]

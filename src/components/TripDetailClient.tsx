@@ -3,13 +3,60 @@
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import MediaGrid from './MediaGrid'
 import MediaUploader, { type UploadItem } from './MediaUploader'
 import UploadPanel from './UploadPanel'
-import EditMediaModal from './EditMediaModal'
+
+const EditMediaModal = dynamic(() => import('./EditMediaModal'), { ssr: false })
 import { toast } from 'sonner'
 import { updateMediaOrder, deleteMultipleMedia } from '@/app/actions/media'
 import type { Media, Trip } from '@/types'
+
+const BATCH_BAR_STYLE = {
+  background: 'rgba(16,11,7,0.95)',
+  border: '1px solid rgba(212,165,116,0.2)',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+} as const
+
+const BATCH_TEXT_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.82rem',
+  color: '#f0e6d6',
+  opacity: 0.7,
+} as const
+
+const BATCH_DIVIDER_STYLE = {
+  width: 1,
+  height: 14,
+  background: 'rgba(240,230,214,0.15)',
+} as const
+
+const DELETE_BTN_STYLE = {
+  fontFamily: 'var(--font-body)',
+  color: '#e07575',
+  opacity: 0.8,
+} as const
+
+const CANCEL_BTN_STYLE = {
+  fontFamily: 'var(--font-body)',
+  color: '#f0e6d6',
+  opacity: 0.4,
+} as const
+
+const CONFIRM_TEXT_STYLE = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.8rem',
+  color: '#f0e6d6',
+  opacity: 0.5,
+} as const
+
+const ADD_BTN_STYLE = {
+  fontFamily: 'var(--font-body)',
+  background: '#d4a574',
+  color: '#0a0a0a',
+  boxShadow: '0 8px 32px rgba(212,165,116,0.35)',
+} as const
 
 interface Props {
   media: Media[]
@@ -142,64 +189,32 @@ export default function TripDetailClient({
             exit={{ y: 80, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-full"
-            style={{
-              background: 'rgba(16,11,7,0.95)',
-              border: '1px solid rgba(212,165,116,0.2)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            }}
+            style={BATCH_BAR_STYLE}
           >
-            <span
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '0.82rem',
-                color: '#f0e6d6',
-                opacity: 0.7,
-              }}
-            >
+            <span style={BATCH_TEXT_STYLE}>
               {selectedIds.size} selected
             </span>
-            <div
-              style={{
-                width: 1,
-                height: 14,
-                background: 'rgba(240,230,214,0.15)',
-              }}
-            />
+            <div style={BATCH_DIVIDER_STYLE} />
             {!batchConfirm ? (
               <>
                 <button
                   onClick={() => setBatchConfirm(true)}
                   className="text-sm transition-all"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    color: '#e07575',
-                    opacity: 0.8,
-                  }}
+                  style={DELETE_BTN_STYLE}
                 >
                   Delete
                 </button>
                 <button
                   onClick={clearSelection}
                   className="text-sm transition-all"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    color: '#f0e6d6',
-                    opacity: 0.4,
-                  }}
+                  style={CANCEL_BTN_STYLE}
                 >
                   Cancel
                 </button>
               </>
             ) : (
               <>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '0.8rem',
-                    color: '#f0e6d6',
-                    opacity: 0.5,
-                  }}
-                >
+                <span style={CONFIRM_TEXT_STYLE}>
                   Are you sure?
                 </span>
                 <button
@@ -216,11 +231,7 @@ export default function TripDetailClient({
                 <button
                   onClick={() => setBatchConfirm(false)}
                   className="text-sm transition-all"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    color: '#f0e6d6',
-                    opacity: 0.4,
-                  }}
+                  style={CANCEL_BTN_STYLE}
                 >
                   Cancel
                 </button>
@@ -234,12 +245,7 @@ export default function TripDetailClient({
       <button
         onClick={() => fileInputRef.current?.click()}
         className="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full text-sm font-medium transition-all duration-200"
-        style={{
-          fontFamily: 'var(--font-body)',
-          background: '#d4a574',
-          color: '#0a0a0a',
-          boxShadow: '0 8px 32px rgba(212,165,116,0.35)',
-        }}
+        style={ADD_BTN_STYLE}
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLButtonElement
           el.style.background = '#e0b98a'

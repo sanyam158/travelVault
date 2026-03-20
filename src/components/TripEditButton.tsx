@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import EditTripModal from './EditTripModal'
+import dynamic from 'next/dynamic'
+
+const EditTripModal = dynamic(() => import('./EditTripModal'), { ssr: false })
 import type { Trip } from '@/types'
 
 interface Props {

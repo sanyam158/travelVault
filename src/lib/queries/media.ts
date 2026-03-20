@@ -23,11 +23,11 @@ export async function getMediaByTrip(tripId: string): Promise<Media[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('media')
-    .select('*')
+    .select('id, trip_id, file_url, thumbnail_url, type, caption, location_name, sort_order, ken_burns_config, captured_at, uploaded_at')
     .eq('trip_id', tripId)
     .order('sort_order', { ascending: true })
     .order('captured_at', { ascending: true })
 
   if (error) throw new Error(error.message)
-  return data ?? []
+  return (data ?? []) as Media[]
 }
